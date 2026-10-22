@@ -1,0 +1,1770 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elaina Visual Novel</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    overflow: hidden;
+}
+
+#menu {
+    width: 100vw;
+    height: 100vh;
+    background: url('background start.jpg') center/cover no-repeat;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+}
+
+.menu-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    color: white;
+}
+
+.menu-content h1 {
+    font-size: 60px;
+    margin-bottom: 20px;
+}
+
+#playerName {
+    width: 300px;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    text-align: center;
+}
+
+#startBtn {
+    margin-top: 15px;
+    padding: 15px 40px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+#game {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    background: url('taman.jpg') center/cover no-repeat;
+}
+
+#character {
+    position: absolute;
+    left: 50px;
+    bottom: 120px;
+    height: 78%;
+    max-height: 750px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#character img {
+    display: block;
+    height: 100%;
+    max-width: 90vw;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 0 20px rgba(0,0,0,0.5));
+}
+
+#character.appear {
+    animation: elainaAppear 1.2s ease-out forwards;
+}
+
+@keyframes elainaAppear {
+    from {
+        opacity: 0;
+        filter: blur(8px);
+    }
+    to {
+        opacity: 1;
+        filter: blur(0);
+    }
+}
+
+/* Elaina melompat kecil hanya saat berbicara */
+#character.talking img {
+    animation: talkingBounce 0.6s ease-in-out infinite;
+}
+
+@keyframes talkingBounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+.dialog-box {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 20px;
+    width: 78%;
+    min-height: 120px;
+    max-height: 65vh;
+    overflow-y: auto;
+    background: rgba(0,0,0,0.82);
+    color: white;
+    border-radius: 15px;
+    padding: 15px 20px;
+    z-index: 2;
+}
+
+#speaker {
+    color: gold;
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+#dialog {
+    font-size: 20px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+#choices {
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+#choices.visible {
+    display: flex;
+}
+
+.choice-btn {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 8px;
+    background: rgba(35,45,75,0.95);
+    color: white;
+    font-size: 16px;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.choice-btn:hover {
+    background: rgba(75,95,145,0.98);
+    border-color: gold;
+}
+
+.hint {
+    margin-top: 10px;
+    text-align: right;
+    color: #ccc;
+    font-size: 13px;
+}
+
+#fade {
+    position: fixed;
+    inset: 0;
+    background: black;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1s ease;
+    z-index: 10;
+}
+
+#fade.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+@media (max-width: 600px) {
+    .menu-content h1 {
+        font-size: 40px;
+    }
+
+    #playerName {
+        width: 260px;
+    }
+
+    #character {
+        left: 10px;
+        bottom: 150px;
+        height: 65%;
+    }
+
+    .dialog-box {
+        width: 94%;
+        bottom: 12px;
+        padding: 12px 15px;
+        max-height: 60vh;
+    }
+
+    #speaker {
+        font-size: 20px;
+    }
+
+    #dialog {
+        font-size: 16px;
+    }
+
+    .choice-btn {
+        font-size: 14px;
+        padding: 11px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div id="menu">
+    <div class="overlay"></div>
+    <div class="menu-content">
+        <h1>ELAINA</h1>
+        <input type="text" id="playerName"
+               placeholder="Masukkan Nama MC"
+               maxlength="30">
+        <br>
+        <button id="startBtn">START GAME</button>
+    </div>
+</div>
+
+<div id="game">
+    <div id="character">
+        <img src="elaina_majo.png" alt="Elaina">
+    </div>
+
+    <div class="dialog-box">
+        <div id="speaker">Narator</div>
+        <div id="dialog"></div>
+        <div id="choices"></div>
+        <div class="hint" id="hint">
+            Klik layar untuk melanjutkan...
+        </div>
+    </div>
+</div>
+
+<div id="fade"></div>
+
+<script>
+let playerName = "Pemain";
+
+const story = [
+
+    // ==========================================
+    // SCENE 1: PERTEMUAN DI TAMAN
+    // ==========================================
+
+    {
+        type: "scene",
+        background: "taman.jpg",
+        outfit: "elaina_majo.png",
+        narration: "Malam itu, langit dipenuhi bintang yang berkelap-kelip. Udara terasa dingin, sementara taman yang biasanya ramai kini begitu sunyi. Hanya terdengar suara angin yang melewati dedaunan dan langkah kaki seseorang yang berjalan sendirian."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Sesekali keluar malem gini enak juga yaa..."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Aku memasukkan kedua tanganku ke dalam saku jaket, menikmati udara malam yang terasa menenangkan. Tidak ada suara kendaraan yang mengganggu, tidak ada keramaian. Hanya aku dan langit malam yang luas."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Namun, ketenangan itu tidak berlangsung lama. Dari arah depan, seseorang berlari menghampiriku."
+    },
+
+    {
+        speaker: "SFX",
+        text: "*Duk!*"
+    },
+
+    {
+        speaker: "Narator",
+        text: "Seseorang menabrak tubuhku hingga kami hampir terjatuh. Seorang gadis dengan rambut panjang berdiri tepat di hadapanku. Ia terlihat terkejut, lalu buru-buru mengulurkan tangannya."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "A-ah! Maaf banget! Kamu nggak apa-apa?"
+    },
+
+    {
+        speaker: "Narator",
+        text: "Aku menatap tangannya sejenak, kemudian menerima uluran tangannya dan berdiri kembali."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Nggak apa-apa kok. Makasih, ya."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Huft... syukurlah. Aku benar-benar minta maaf."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Hehe, santai aja. Eh, ngomong-ngomong, nama kamu siapa?"
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Oh, namaku Elaina."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Elaina, ya? Namanya bagus. Aku {player}."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "{player}... senang bertemu denganmu."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Hehe, sama-sama. Tapi kamu ngapain di taman gini malam-malam? Sendirian lagi."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Eh... sebenarnya..."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Elaina terdiam cukup lama. Ia mencoba mengingat sesuatu, tetapi ekspresinya perlahan berubah menjadi kebingungan."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Aku juga nggak terlalu ingat kenapa aku ada di sini..."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Hah? Maksudnya kamu nggak ingat kenapa kamu ada di taman ini?"
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Iya... aku nggak tahu harus pergi ke mana. Aku juga nggak begitu ingat apa yang terjadi sebelumnya."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Awalnya kupikir dia hanya bercanda, tetapi wajahnya terlihat terlalu serius untuk sebuah lelucon."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Di sana ada bangku. Kamu kelihatan capek banget. Duduk dulu aja, yuk."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Ah... boleh."
+    },
+
+
+    // ==========================================
+    // SCENE 2: BANGKU TAMAN
+    // ==========================================
+
+    {
+        type: "scene",
+        background: "bangku_taman.jpg",
+        narration: "Kami berjalan bersama menuju bangku taman yang tidak jauh dari tempat kami bertabrakan. Elaina duduk perlahan sambil menatap jalan setapak yang kosong."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Aku memperhatikannya sebentar. Ia terlihat lelah, sementara udara malam semakin dingin."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Kamu tunggu di sini dulu, ya. Aku ke sana sebentar."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Hm? Kamu mau ke mana?"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Mau beli minum sebentar. Ada kedai kopi nggak jauh dari sini."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Ohh... oke. Jangan lama-lama, ya."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Aku meninggalkan Elaina di bangku taman. Angin malam kembali berembus. Ia merapatkan kedua tangannya, mencoba menghangatkan tubuhnya."
+    },
+
+
+    // ==========================================
+    // SCENE 3: KEDAI KOPI
+    // ==========================================
+
+    {
+        type: "scene",
+        background: "kedai_kopi.jpg",
+        narration: "Setelah berjalan beberapa menit, akhirnya aku sampai di sebuah kedai kopi kecil. Aroma kopi yang baru diseduh menyambutku begitu aku masuk."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Mas, kopi susu satu, ya."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Saat menunggu pesananku, tiba-tiba aku teringat sesuatu."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Eh, bentar... aku lupa. Elaina sukanya apa, ya?"
+    },
+
+    {
+        speaker: "Narator",
+        text: "Tentu saja aku tidak tahu. Kami bahkan baru saja bertemu beberapa menit yang lalu. Aku kembali melihat menu. Kopi susu atau Americano?"
+    },
+
+    {
+        type: "choice",
+        speaker: "Narator",
+        text: "Aku harus memilih minuman untuk Elaina.",
+        choices: [
+            {
+                text: "Membelikan Elaina kopi susu",
+                dialogue: [
+                    {
+                        speaker: "{player}",
+                        text: "Sepertinya kopi susu cocok untuknya. Rasanya juga tidak terlalu pahit."
+                    },
+                    {
+                        speaker: "Narator",
+                        text: "Aku menunjuk menu kopi susu sekali lagi."
+                    },
+                    {
+                        speaker: "{player}",
+                        text: "Mas, kopi susu satu lagi, ya."
+                    },
+                    {
+                        speaker: "Narator",
+                        text: "Tidak lama kemudian, dua gelas kopi sudah berada di tanganku. Aku segera meninggalkan kedai."
+                    }
+                ]
+            },
+
+            {
+                text: "Membelikan Elaina Americano",
+                dialogue: [
+                    {
+                        speaker: "{player}",
+                        text: "Hmm, mungkin dia suka kopi pahit seperti Americano."
+                    },
+                    {
+                        speaker: "Narator",
+                        text: "Aku menunjuk menu Americano dan memesan satu gelas tambahan."
+                    },
+                    {
+                        speaker: "{player}",
+                        text: "Mas, Americano satu lagi, ya."
+                    },
+                    {
+                        speaker: "Narator",
+                        text: "Beberapa saat kemudian, aku membawa dua gelas minuman dan segera kembali ke taman."
+                    }
+                ]
+            }
+        ]
+    },
+
+
+    // ==========================================
+    // SCENE 4: KEMBALI KE TAMAN
+    // ==========================================
+
+    {
+        type: "scene",
+        background: "bangku_taman.jpg",
+        outfit:"elaina_majo.png",
+        narration: "Dari kejauhan, aku bisa melihat Elaina masih duduk di bangku yang sama. Begitu menyadari kedatanganku, ia langsung mengangkat kepalanya."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "{player}! Kamu akhirnya kembali!"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Hehe, maaf nunggu lama."
+    },
+
+    {
+        type: "choice",
+        speaker: "Narator",
+        text: "Aku menyerahkan minuman yang sudah kubeli kepada Elaina.",
+        choices: [
+            {
+                text: "Memberikan kopi susu",
+                dialogue: [
+                    {
+                        speaker: "{player}",
+                        text: "Nih, buat kamu. Aku beliin kopi susu."
+                    },
+                    {
+                        speaker: "Elaina",
+                        text: "Eh? Buat aku? Makasih, ya!"
+                    },
+                    {
+                        speaker: "Narator",
+                        text: "Elaina menerima gelas itu dengan kedua tangan. Ia meniup permukaan minumannya sebelum menyesapnya perlahan."
+                    },
+                    {
+                        speaker: "Elaina",
+                        text: "Enak... rasanya lembut dan sedikit manis."
+                    },
+                    {
+                        speaker: "{player}",
+                        text: "Cocok?"
+                    },
+                    {
+                        speaker: "Elaina",
+                        text: "Iya! Makasih, {player}."
+                    },
+                    {
+                        speaker: "Narator",
+                        text: "Melihat ekspresinya yang kini lebih cerah, aku ikut tersenyum."
+                    }
+                ]
+            },
+
+            {
+                text: "Memberikan Americano",
+                dialogue: [
+                    {
+                        speaker: "{player}",
+                        text: "Nih, buat kamu. Aku beliin Americano."
+                    },
+                    {
+                        speaker: "Elaina",
+                        text: "...Americano?"
+                    },
+                    {
+                        speaker: "{player}",
+                        text: "Iya. Kamu suka kopi pahit, nggak?"
+                    },
+                    {
+                        speaker: "Elaina",
+                        text: "{player}! Kamu tahu dari mana? Aku suka Americano!"
+                    },
+                    {
+                        speaker: "{player}",
+                        text: "Hah? Serius? Kebetulan banget."
+                    },
+                    {
+                        speaker: "Narator",
+                        text: "Elaina tersenyum lebar dan menyesap kopinya perlahan."
+                    },
+                    {
+                        speaker: "Elaina",
+                        text: "Ah... enak sekali. Makasih, {player}."
+                    },
+                    {
+                        speaker: "Narator",
+                        text: "Aku tidak tahu mengapa, tetapi melihatnya bahagia membuat malam yang dingin ini terasa sedikit lebih hangat."
+                    }
+                ]
+            }
+        ]
+    },
+
+    {
+        speaker: "Narator",
+        text: "Setelah beberapa saat, kami kembali duduk berdampingan di bangku taman."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Elaina..."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Hm?"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Jadi... kamu benar-benar nggak ingat tempat tinggalmu?"
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Iya... aku bahkan nggak tahu harus pergi ke mana setelah ini."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Senyum di wajah Elaina perlahan memudar. Ia menunduk, menatap gelas kopi yang berada di tangannya."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Aku sudah mencoba mengingatnya. Tapi setiap kali aku berusaha, rasanya seperti ada sesuatu yang hilang dari kepalaku."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Aku nggak tahu siapa yang sedang mencariku. Aku juga nggak tahu apakah ada seseorang yang menungguku pulang."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Maaf, ya. Aku malah merepotkanmu, padahal kita baru saja bertemu."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Hei, jangan minta maaf terus. Kamu nggak melakukan kesalahan apa-apa."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Aku terdiam sejenak, memikirkan apa yang sebaiknya kulakukan. Meninggalkannya sendirian di taman bukanlah pilihan yang bisa kuambil dengan tenang."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Elaina, kalau kamu nggak keberatan..."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Ya?"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Kamu boleh tinggal di kosanku dulu."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "...Eh?"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Kosanku nggak jauh dari sini. Memang sederhana sih, tapi setidaknya kamu punya tempat buat istirahat malam ini."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "T-tunggu sebentar! Maksudmu... aku tinggal bersamamu?"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Iya. Untuk sementara aja. Besok kita bisa memikirkan apa yang harus dilakukan selanjutnya."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "T-tapi kita baru saja kenalan..."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Kalau kamu nggak nyaman, nggak apa-apa. Aku cuma nggak tega membiarkanmu sendirian di sini."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Elaina kembali terdiam. Ia menatapku, lalu mengalihkan pandangannya ke arah lain. Kedua pipinya tampak sedikit memerah."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Bo-boleh... aku boleh ikut kamu?"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Hehe, tentu saja."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "...Makasih."
+    },
+
+
+    // ==========================================
+    // SCENE 5: PERJALANAN KE KOS
+    // ==========================================
+
+    {
+        type: "scene",
+        background: "jalan.jpg",
+        outfit:"elaina_majo.png",
+        narration: "Kami meninggalkan taman dan mulai berjalan menyusuri jalan kecil menuju kosanku. Udara malam semakin dingin. Sesekali, angin berembus melewati pepohonan di pinggir jalan."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "{player}..."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Kenapa?"
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Kosmu jauh dari sini?"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Nggak terlalu. Paling beberapa menit lagi."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Oh..."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Kalau boleh tahu... kamu tinggal sendirian?"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Iya. Aku ngekos karena tempat tinggalku jauh."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Begitu, ya..."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Kalau begitu, mulai malam ini aku bakal merepotkanmu, ya?"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Nggak usah dipikirin. Kita cari jalan keluarnya sama-sama."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Hehe... kamu baik juga, ternyata."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Baru tahu?"
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Jangan ge-er!"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Lho, aku kan cuma nanya."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Ih, dasar!"
+    },
+
+    {
+        speaker: "Narator",
+        text: "Elaina memalingkan wajahnya, tetapi aku sempat melihat senyum kecil di bibirnya."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Aku tidak tahu siapa sebenarnya Elaina. Aku tidak tahu apa yang membuatnya kehilangan ingatan, atau ke mana ia seharusnya pulang."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Yang kutahu hanya satu. Malam ini, seorang gadis asing yang bahkan tidak mengingat rumahnya akan berjalan bersamaku menuju kos kecilku."
+    },
+
+
+    // ==========================================
+    // SCENE 6: TIBA DI KOS
+    // ==========================================
+
+    {
+        type: "scene",
+        background: "ruang_makan.jpeg",
+        outfit: "elaina_casual.jpeg.png",
+        narration: "Setelah berjalan beberapa menit, akhirnya kami sampai di kosanku. Bangunannya sederhana, dengan sebuah kamar kecil yang menjadi tempatku beristirahat setiap hari."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Nah, akhirnya sampai juga. Memang nggak terlalu luas, tapi semoga kamu nyaman di sini."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Wah... jadi ini tempat tinggalmu?"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Iya. Maaf ya kalau agak berantakan."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Nggak kok! Menurutku tempat ini cukup nyaman."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Elaina melangkah masuk sambil memperhatikan sekeliling ruangan."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Jadi... aku benar-benar boleh tinggal di sini?"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Untuk sementara, tentu saja. Kamu istirahat saja dulu."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Hehe... makasih banyak, {player}."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Aku meletakkan barang-barangku, kemudian teringat bahwa kami belum membersihkan diri setelah berjalan di luar sepanjang malam."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Oh iya, kamu mau mandi duluan atau aku duluan?"
+    },
+
+
+    // ==========================================
+    // PILIHAN MANDI
+    // ==========================================
+
+    {
+        type: "choice",
+        speaker: "Narator",
+        text: "Siapa yang akan mandi terlebih dahulu?",
+        choices: [
+            {
+                text: "Elaina duluan yang mandi",
+                dialogue: [
+                    {
+                        speaker: "Elaina",
+                        text: "E-eh?! Aku duluan?"
+                    },
+                    {
+                        speaker: "{player}",
+                        text: "Iya. Kenapa? Kamu nggak mau?"
+                    },
+                    {
+                        speaker: "Elaina",
+                        text: "B-bukan begitu! Aku cuma..."
+                    },
+                    {
+                        speaker: "Narator",
+                        text: "Elaina mundur selangkah sambil memeluk tubuhnya sendiri. Tatapannya berubah waspada."
+                    },
+                    {
+                        speaker: "Elaina",
+                        text: "Kamu... nggak punya maksud aneh-aneh, kan?"
+                    },
+                    {
+                        speaker: "{player}",
+                        text: "Hah?! Nggak ada! Aku cuma nanya siapa yang mau mandi duluan!"
+                    },
+                    {
+                        speaker: "Elaina",
+                        text: "B-benarkah?"
+                    },
+                    {
+                        speaker: "{player}",
+                        text: "Ya iyalah. Aku juga nggak mau bikin kamu nggak nyaman."
+                    },
+                    {
+                        speaker: "Narator",
+                        text: "Elaina memperhatikanku beberapa saat sebelum akhirnya mengembuskan napas lega."
+                    },
+                    {
+                        speaker: "Elaina",
+                        text: "...Baiklah. Kalau begitu, aku mandi dulu."
+                    },
+                    {
+                        speaker: "{player}",
+                        text: "Oke. Aku bakal menyiapkan makan malam sementara kamu mandi."
+                    },
+                    {
+                        speaker: "Elaina",
+                        text: "Makan malam? Kamu bisa memasak?"
+                    },
+                    {
+                        speaker: "{player}",
+                        text: "Tentu saja. Memangnya aku kelihatan nggak bisa masak?"
+                    },
+                    {
+                        speaker: "Elaina",
+                        text: "Hehe... aku cuma penasaran."
+                    },
+                    {
+                        speaker: "Narator",
+                        text: "Elaina mengambil perlengkapan mandi dan berjalan menuju kamar mandi. Aku mulai menyiapkan bahan-bahan untuk makan malam."
+                    },
+                    {
+                        speaker: "Narator",
+                        text: "Malam ini, nasi goreng dengan telur menjadi pilihan yang paling masuk akal."
+                    },
+                    {
+                        speaker: "Narator",
+                        text: "Aku memotong bawang, menyiapkan nasi, lalu mulai memasak. Tak lama kemudian, aroma nasi goreng memenuhi ruangan."
+                    },
+                    {
+                        speaker: "Narator",
+                        text: "Setelah Elaina selesai mandi, aku pun bergantian membersihkan diri. Saat aku kembali, makan malam sudah siap."
+                    }
+                ]
+            },
+
+            {
+                text: "{player} duluan yang mandi",
+                dialogue: [
+                    {
+                        speaker: "Elaina",
+                        text: "Eh? Kamu duluan?"
+                    },
+                    {
+                        speaker: "{player}",
+                        text: "Iya, kalau kamu nggak keberatan."
+                    },
+                    {
+                        speaker: "Narator",
+                        text: "Elaina terdiam sebentar. Kemudian, senyum kecil muncul di wajahnya."
+                    },
+                    {
+                        speaker: "Elaina",
+                        text: "Oh... kalau begitu, silakan saja!"
+                    },
+                    {
+                        speaker: "{player}",
+                        text: "Lho? Kok kamu kelihatan senang?"
+                    },
+                    {
+                        speaker: "Elaina",
+                        text: "N-nggak kok! Aku cuma merasa lebih tenang, itu saja!"
+                    },
+                    {
+                        speaker: "{player}",
+                        text: "Hmmm... ya sudah, aku mandi dulu."
+                    },
+                    {
+                        speaker: "Elaina",
+                        text: "Iya! Silakan!"
+                    },
+                    {
+                        speaker: "Narator",
+                        text: "Aku mengambil perlengkapan mandi lalu masuk ke kamar mandi. Sementara itu, Elaina menunggu di ruangan sambil memperhatikan barang-barang di sekelilingnya."
+                    },
+                    {
+                        speaker: "Narator",
+                        text: "Setelah selesai mandi, aku kembali dan mendapati Elaina sedang duduk dengan tenang."
+                    },
+                    {
+                        speaker: "{player}",
+                        text: "Oke, sekarang giliranmu. Kamu mandi saja, ya. Aku bakal masak makan malam."
+                    },
+                    {
+                        speaker: "Elaina",
+                        text: "Baiklah! Jangan sampai gosong, ya!"
+                    },
+                    {
+                        speaker: "{player}",
+                        text: "Hei, kamu meragukan kemampuan memasakku?"
+                    },
+                    {
+                        speaker: "Elaina",
+                        text: "Hehe, rahasia!"
+                    },
+                    {
+                        speaker: "Narator",
+                        text: "Aku menggelengkan kepala sambil tersenyum. Setelah Elaina masuk ke kamar mandi, aku mulai menyiapkan bahan-bahan untuk nasi goreng."
+                    },
+                    {
+                        speaker: "Narator",
+                        text: "Nasi, bawang, bumbu sederhana, dan telur. Tidak mewah, tetapi cukup untuk makan malam kami."
+                    },
+                    {
+                        speaker: "Narator",
+                        text: "Ketika nasi goreng selesai dimasak dan Elaina sudah selesai mandi, aku menyiapkan dua porsi di atas meja."
+                    }
+                ]
+            }
+        ]
+    },
+
+
+    // ==========================================
+    // SCENE 7: MAKAN MALAM
+    // ==========================================
+
+    {
+        type: "scene",
+        background: "ruang_makan.jpeg",
+        outfit: "elaina_casual.png",
+        narration: "Akhirnya, kami berkumpul di ruang makan kecil. Aku menggelar alas untuk duduk di lantai, lalu meletakkan meja rendah di antara kami. Dua piring nasi goreng dengan telur tersaji di atas meja."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Wah... kelihatannya enak!"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Hehe, jangan berekspektasi terlalu tinggi. Ini cuma nasi goreng biasa."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Nggak apa-apa! Aku sudah senang kamu mau memasakkan makanan untukku."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Kalau begitu, ayo makan sebelum dingin."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Selamat makan!"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Selamat makan."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Kami mulai menikmati makan malam. Sesekali, aku melirik Elaina yang tampak menikmati nasi goreng buatanku."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Hmm... enak!"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Benarkah? Syukurlah kalau begitu."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Iya! Aku suka telur yang seperti ini."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Kalau begitu, nanti kalau ada kesempatan, aku masakkan lagi."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Janji, ya?"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Iya, janji."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Percakapan kecil itu membuat suasana terasa lebih hangat. Untuk sesaat, aku hampir lupa bahwa gadis di hadapanku adalah seseorang yang baru kukenal malam ini."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Setelah selesai makan, kami membereskan piring dan kembali duduk berhadapan di atas alas."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Elaina, boleh aku tanya sesuatu?"
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Tentu. Apa itu?"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Pakaian yang kamu kenakan itu..."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Pakaianku?"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Iya. Kelihatannya sangat asing bagiku. Modelnya berbeda dari pakaian yang biasa kulihat. Rasanya seperti pakaian dari dunia lain."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Elaina menunduk dan memperhatikan pakaiannya sendiri."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Benarkah? Kalau dibandingkan dengan pakaianmu... mungkin memang terlihat mencolok, ya."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Nah, kan? Aku sampai penasaran kamu sebenarnya berasal dari mana."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "...Aku juga ingin tahu."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Senyum Elaina perlahan menghilang. Ia kembali terlihat seperti gadis kebingungan yang kutemui di taman tadi."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Maaf. Aku nggak bermaksud membuatmu sedih."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Nggak apa-apa. Kamu cuma bertanya."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Aku terdiam sejenak sebelum memutuskan untuk menanyakan sesuatu yang lebih penting."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Elaina, bagaimana rencanamu ke depannya?"
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Rencana...?"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Kamu boleh menetap di sini sampai ingatanmu kembali. Aku nggak keberatan."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Atau kalau kamu mau, kita bisa menjelajahi dunia ini bersama-sama. Mencari tahu hal-hal baru, mungkin juga mencari petunjuk tentang asalmu."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Elaina tidak langsung menjawab. Ia menatap kedua tangannya sendiri, tenggelam dalam pikirannya."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Aku..."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Aku belum tahu."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Kamu nggak harus memutuskan sekarang."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Bolehkah aku memikirkannya sampai besok?"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Tentu saja. Nggak perlu terburu-buru."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Terima kasih, {player}."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Elaina tersenyum tipis. Meski masih tampak ragu, setidaknya ia tidak perlu memaksakan dirinya untuk mengambil keputusan malam ini."
+    },
+
+
+    // ==========================================
+    // SCENE 8: WAKTUNYA TIDUR
+    // ==========================================
+
+    {
+        type: "scene",
+        background: "kamar.jpg",
+        outfit: "elaina_casual.png",
+        narration: "Waktu terus berlalu. Malam semakin larut, dan kami mulai merasa mengantuk."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Sepertinya sudah waktunya tidur."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Iya... hari ini terasa panjang sekali."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Oh iya, ada satu masalah kecil."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Masalah apa?"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Kasurku cuma satu."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "...Eh?"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Kamu pakai kasurku saja malam ini. Aku tidur di ruang makan."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "T-tunggu! Kamu yakin?"
+    },
+
+    {
+        speaker: "{player}",
+        text: "Iya. Kamu pasti capek. Kamu bisa istirahat dengan nyaman di sana."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Tapi itu kan kasurmu..."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Nggak apa-apa. Aku bisa tidur di atas alas di ruang makan."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Aku mengambil bantal dan selimut tambahan, lalu membawanya ke ruang makan."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "{player}..."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Hm?"
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Terima kasih. Untuk semuanya... karena sudah menolongku malam ini."
+    },
+
+    {
+        speaker: "{player}",
+        text: "Nggak usah dipikirkan. Selamat tidur, Elaina."
+    },
+
+    {
+        speaker: "Elaina",
+        text: "Selamat tidur, {player}."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Elaina masuk ke kamar dan berbaring di kasur yang biasa kupakai. Aku mematikan lampu utama, lalu membaringkan tubuhku di atas alas ruang makan."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Di balik pintu kamar yang tertutup, Elaina masih terjaga untuk beberapa saat. Ia memandangi langit-langit, mencoba mengingat sesuatu yang terus terasa berada di ujung pikirannya."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Namun, tidak ada ingatan yang kembali malam itu."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Aku pun perlahan memejamkan mata. Besok mungkin akan membawa jawaban baru, atau justru lebih banyak pertanyaan."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Untuk malam ini, setidaknya kami berdua tidak lagi sendirian."
+    },
+
+    {
+        speaker: "Narator",
+        text: "Bersambung..."
+    }
+
+];
+
+
+// ==========================================
+// MESIN VISUAL NOVEL
+// ==========================================
+
+const startBtn = document.getElementById("startBtn");
+const menu = document.getElementById("menu");
+const game = document.getElementById("game");
+const fade = document.getElementById("fade");
+const dialog = document.getElementById("dialog");
+const speaker = document.getElementById("speaker");
+const character = document.getElementById("character");
+const choicesBox = document.getElementById("choices");
+const hint = document.getElementById("hint");
+
+let current = 0;
+let typing = false;
+let typingInterval = null;
+let gameStarted = false;
+let transitioning = false;
+let activeDialogue = null;
+let choiceActive = false;
+
+let inBranch = false;
+let branchQueue = [];
+let branchIndex = 0;
+
+let elainaAppearedThisScene = false;
+
+
+// Mengganti {player} dengan nama yang dimasukkan pemain.
+function replaceName(text) {
+    return String(text ?? "").replaceAll("{player}", playerName);
+}
+
+
+// Menghentikan efek bicara Elaina.
+function stopTalking() {
+    character.classList.remove("talking");
+}
+
+
+// Mengatur kemunculan Elaina.
+function showCharacter() {
+    if (elainaAppearedThisScene) return;
+
+    elainaAppearedThisScene = true;
+
+    character.classList.remove("appear");
+    void character.offsetWidth;
+    character.classList.add("appear");
+}
+
+
+// Mengatur dialog dan animasi.
+function showDialogue(data) {
+    clearInterval(typingInterval);
+
+    if (!data) {
+        finishGame();
+        return;
+    }
+
+    activeDialogue = data;
+
+    speaker.textContent = replaceName(data.speaker);
+    dialog.textContent = "";
+
+    dialog.parentElement.scrollTop = 0;
+
+    stopTalking();
+
+    if (data.speaker === "Elaina") {
+        showCharacter();
+        character.classList.add("talking");
+    }
+
+    typing = true;
+
+    const text = replaceName(data.text);
+    let i = 0;
+
+    typingInterval = setInterval(() => {
+        dialog.textContent += text[i];
+        i++;
+
+        if (i >= text.length) {
+            clearInterval(typingInterval);
+            typing = false;
+            stopTalking();
+        }
+    }, 30);
+}
+
+
+// Menyembunyikan tombol pilihan.
+function hideChoices() {
+    choicesBox.innerHTML = "";
+    choicesBox.classList.remove("visible");
+    choiceActive = false;
+    hint.style.display = "block";
+}
+
+
+// Menampilkan pilihan bercabang.
+function showChoices(data) {
+    clearInterval(typingInterval);
+
+    typing = false;
+    activeDialogue = null;
+
+    stopTalking();
+
+    speaker.textContent = replaceName(data.speaker);
+    dialog.textContent = replaceName(data.text);
+
+    choicesBox.innerHTML = "";
+    choicesBox.classList.add("visible");
+
+    choiceActive = true;
+    hint.style.display = "none";
+
+    data.choices.forEach((choice) => {
+        const button = document.createElement("button");
+
+        button.className = "choice-btn";
+        button.textContent = replaceName(choice.text);
+
+        button.addEventListener("click", (event) => {
+            event.stopPropagation();
+
+            if (!choiceActive || transitioning) return;
+
+            choiceActive = false;
+            inBranch = true;
+
+            branchQueue = choice.dialogue;
+            branchIndex = 0;
+
+            hideChoices();
+
+            if (branchQueue.length > 0) {
+                showDialogue(branchQueue[branchIndex]);
+            } else {
+                endBranch();
+            }
+        });
+
+        choicesBox.appendChild(button);
+    });
+}
+
+
+// Mengakhiri cabang dan kembali ke cerita utama.
+function endBranch() {
+    inBranch = false;
+    branchQueue = [];
+    branchIndex = 0;
+
+    current++;
+    processCurrent();
+}
+
+
+// Mengganti outfit Elaina tanpa mengganggu animasi karakter.
+// Gambar baru hanya dipakai jika file-nya benar-benar tersedia.
+function changeElainaOutfit(imageName) {
+    if (!imageName) return;
+
+    const elainaImage = character.querySelector("img");
+    if (!elainaImage) return;
+
+    const testImage = new Image();
+
+    testImage.onload = () => {
+        elainaImage.src = imageName;
+    };
+
+    testImage.onerror = () => {
+        console.warn("File outfit Elaina tidak ditemukan:", imageName);
+    };
+
+    testImage.src = imageName;
+}
+
+
+// Mengganti latar dengan transisi fade.
+function changeScene(scene) {
+    if (transitioning) return;
+
+    transitioning = true;
+
+    clearInterval(typingInterval);
+
+    typing = false;
+    activeDialogue = null;
+
+    hideChoices();
+    stopTalking();
+
+    fade.classList.add("active");
+
+    setTimeout(() => {
+        // Elaina disembunyikan saat pergantian scene.
+        character.classList.remove("appear", "talking");
+        elainaAppearedThisScene = false;
+
+        game.style.backgroundImage =
+            `url("${scene.background}")`;
+
+        // Ganti outfit hanya jika scene memiliki properti outfit.
+        if (scene.outfit) {
+            changeElainaOutfit(scene.outfit);
+        }
+
+        speaker.textContent = "Narator";
+        dialog.textContent = replaceName(scene.narration);
+
+        dialog.parentElement.scrollTop = 0;
+
+        fade.classList.remove("active");
+
+        setTimeout(() => {
+            transitioning = false;
+        }, 1050);
+
+    }, 1000);
+}
+
+
+// Memproses dialog atau scene berikutnya.
+function processCurrent() {
+    if (current >= story.length) {
+        finishGame();
+        return;
+    }
+
+    const item = story[current];
+
+    if (item.type === "scene") {
+        changeScene(item);
+        return;
+    }
+
+    if (item.type === "choice") {
+        showChoices(item);
+        return;
+    }
+
+    showDialogue(item);
+}
+
+
+// Melanjutkan cerita saat layar diklik.
+function advanceStory() {
+    if (transitioning || choiceActive) return;
+
+    if (inBranch) {
+        branchIndex++;
+
+        if (branchIndex < branchQueue.length) {
+            showDialogue(branchQueue[branchIndex]);
+        } else {
+            endBranch();
+        }
+
+        return;
+    }
+
+    current++;
+    processCurrent();
+}
+
+
+// Mengakhiri cerita.
+function finishGame() {
+    clearInterval(typingInterval);
+
+    typing = false;
+    choiceActive = false;
+    activeDialogue = null;
+
+    hideChoices();
+    stopTalking();
+
+    speaker.textContent = "Narator";
+    dialog.textContent = "=== AKHIR EPISODE 2 ===";
+
+    hint.style.display = "none";
+}
+
+
+// ==========================================
+// START GAME
+// ==========================================
+
+startBtn.addEventListener("click", () => {
+    if (gameStarted) return;
+
+    gameStarted = true;
+
+    playerName =
+        document.getElementById("playerName").value.trim();
+
+    if (playerName === "") {
+        playerName = "Pemain";
+    }
+
+    fade.classList.add("active");
+
+    setTimeout(() => {
+        menu.style.display = "none";
+        game.style.display = "block";
+
+        current = 0;
+
+        inBranch = false;
+        branchQueue = [];
+        branchIndex = 0;
+
+        transitioning = false;
+        elainaAppearedThisScene = false;
+
+        character.classList.remove("appear", "talking");
+
+        game.style.backgroundImage = "url('taman.jpg')";
+
+        fade.classList.remove("active");
+
+        processCurrent();
+
+    }, 1000);
+});
+
+
+// ==========================================
+// KLIK UNTUK MELANJUTKAN DIALOG
+// ==========================================
+
+game.addEventListener("click", () => {
+    if (transitioning || choiceActive) return;
+
+    // Jika teks sedang diketik, tampilkan seluruh teks.
+    if (typing) {
+        clearInterval(typingInterval);
+
+        if (activeDialogue) {
+            dialog.textContent =
+                replaceName(activeDialogue.text);
+        }
+
+        typing = false;
+        stopTalking();
+
+        return;
+    }
+
+    advanceStory();
+});
+
+</script>
+
+</body>
+</html>
